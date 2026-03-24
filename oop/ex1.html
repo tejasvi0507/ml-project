@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Order Form</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #totalCost {
+            font-weight: bold;
+            background-color: #e0e0e0;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Coffee Order</h1>
+    <form id="coffeeOrderForm">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <select id="productSelect" onchange="updatePrice()">
+                            <option value="">Select a product</option>
+                            <option value="Espresso" data-price="2.50">Espresso</option>
+                            <option value="Latte" data-price="3.75">Latte</option>
+                            <option value="Cappuccino" data-price="3.50">Cappuccino</option>
+                            <option value="Americano" data-price="3.00">Americano</option>
+                        </select>
+                    </td>
+                    <td><input type="number" id="quantity" min="1" value="1"></td>
+                    <td><span id="productPrice">0.00</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <button type="button" onclick="calculateTotal()">OK</button>
+        <p>Total Cost: $<input type="text" id="totalCost" readonly></p>
+        <button type="submit">Submit Order</button>
+    </form>
+
+    <script>
+        const products = {
+            "Espresso": 2.50,
+            "Latte": 3.75,
+            "Cappuccino": 3.50,
+            "Americano": 3.00
+        };
+
+        function updatePrice() {
+            const productSelect = document.getElementById('productSelect');
+            const productPriceSpan = document.getElementById('productPrice');
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const price = selectedOption.dataset.price || '0.00';
+            productPriceSpan.textContent = parseFloat(price).toFixed(2);
+        }
+
+        function calculateTotal() {
+            const productSelect = document.getElementById('productSelect');
+            const quantityInput = document.getElementById('quantity');
+            const totalCostInput = document.getElementById('totalCost');
+
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const price = parseFloat(selectedOption.dataset.price || '0');
+            const quantity = parseInt(quantityInput.value);
+
+            if (selectedOption.value && quantity > 0) {
+                const total = price * quantity;
+                totalCostInput.value = total.toFixed(2);
+            } else {
+                totalCostInput.value = '0.00';
+            }
+        }
+
+        // Disable total cost field on mouseover
+        document.getElementById('totalCost').addEventListener('mouseover', function() {
+            this.disabled = true;
+        });
+
+        // Re-enable total cost field on mouseout (optional, for user convenience)
+        document.getElementById('totalCost').addEventListener('mouseout', function() {
+            this.disabled = false;
+        });
+    </script>
+</body>
+</html>

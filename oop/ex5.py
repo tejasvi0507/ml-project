@@ -9,7 +9,7 @@ class Student:
         print("Name:", self.name)
         print("Marks:", self.marks)
         print("School:", Student.school)
-
+        
 # creating objects
 s1 = Student("Tejasvi", 90)
 s2 = Student("Rahul", 85)
