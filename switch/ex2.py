@@ -3,7 +3,7 @@ def calculator():
     b=int(input("Enter a number b:"))
     op=int(input("Select an operation:"))
 
-match(op):
+switch(op)
 case 1:
 if(op=='+'):
     add=a+b

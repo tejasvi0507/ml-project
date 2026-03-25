@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --bg: #f4f7f6;
+            --text: #333;
+            --card-bg: #fff;
+            --sidebar-width: 250px;
+        }
+
+        /* Dark Theme Variables */
+        [data-theme="dark"] {
+            --primary: #64b5f6;
+            --bg: #121212;
+            --text: #e0e0e0;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: 0.3s;
+        }
+
+        /* --- Landing Page --- */
+        #landing-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 20px;
+        }
+
+        .role-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: var(--primary);
+            color: white;
+            transition: transform 0.2s;
+        }
+
+        .role-btn:hover { transform: scale(1.05); }
+
+        /* --- Login Forms --- */
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        /* --- Dashboard Layout --- */
+        #dashboard { display: none; }
+        
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-btn { font-size: 24px; cursor: pointer; }
+        .logout-btn { background: #d32f2f; border: none; padding: 5px 10px; color: white; cursor: pointer; border-radius: 4px;}
+
+        .sidebar {
+            position: fixed;
+            top: 60px;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background: var(--card-bg);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: 0.3s;
+            padding-top: 20px;
+            z-index: 100;
+        }
+
+        .sidebar.active { left: 0; }
+
+        .sidebar a {
+            padding: 15px 20px;
+            text-decoration: none;
+            display: block;
+            color: var(--text);
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar a:hover { background: #eee; }
+
+        .content { padding: 20px; margin-left: 0; transition: 0.3s; }
+        .content.expanded { margin-left: 250px; }
+
+        /* --- Components --- */
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .hidden { display: none; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--primary); color: white; }
+
+        .upload-box {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LANDING PAGE -->
+    <div id="landing-page">
+        <h1>School Portal</h1>
+        <button class="role-btn" onclick="showLogin('student')">Student Login</button>
+        <button class="role-btn" onclick="showLogin('parent')">Parent Login</button>
+        <button class="role-btn" onclick="showLogin('teacher')">Teacher Login</button>
+        <button class="role-btn" onclick="showLogin('office')">Office Login</button>
+    </div>
+
+    <!-- 2. LOGIN FORMS -->
+    <div id="login-container" class="container hidden">
+        <h2 id="login-title">Login</h2>
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <input type="text" id="uid" placeholder="User ID" required>
+            <input type="password" id="pass" placeholder="Password" required>
+            <div id="section-input" class="hidden">
+                <input type="text" id="section" placeholder="Section (e.g., A, B)">
+            </div>
+            <button type="submit" class="role-btn" style="width:100%">Login</button>
+            <p style="text-align:center; margin-top:10px; cursor:pointer; color:blue;" onclick="resetPassword()">Forgot Password?</p>
+            <p style="text-align:center; cursor:pointer;" onclick="goHome()">Back</p>
+        </form>
+    </div>
+
+    <!-- 3. DASHBOARD -->
+    <div id="dashboard">
+        <div class="header">
+            <div class="menu-btn" onclick="toggleSidebar()">☰</div>
+            <h3 id="user-role-display">Role</h3>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <!-- Links injected via JS based on role -->
+        </div>
+
+        <div id="main-content" class="content">
+            <!-- Dynamic Content Here -->
+        </div>
+    </div>
+
+    <script>
+        // --- MOCK DATABASE (Simulated) ---
+        const db = {
+            students: [
+                { id: 'S001', pass: '123', name: 'John Doe', advisor: 'Mr. Smith', proctor: 'Ms. Jones', fees: 'Paid' },
+                { id: 'S002', pass: '123', name: 'Jane Doe', advisor: 'Mr. Smith', proctor: 'Ms. Jones', fees: 'Pending' }
+            ],
+            teachers: [
+                { id: 'T001', pass: '123', section: 'A', name: 'Mr. Teacher' },
+                { id: 'T002', pass: '123', section: 'B', name: 'Ms. Teacher' }
+            ],
+            office: [
+                { id: 'O001', pass: '123', name: 'Admin' }
+            ],
+            circulars: [
+                { title: 'Exam Schedule', type: 'PDF', url: '#' },
+                { title: 'Holiday Notice', type: 'Image', url: '#' }
+            ],
+            marks: {
+                'S001': { ia1: 85, ia2: 90, final: 88 },
+                'S002': { ia1: 70, ia2: 75, final: 72 }
+            }
+        };
+
+        let currentUser = null;
+        let currentRole = null;
+
+        // --- NAVIGATION LOGIC ---
+        function showLogin(role) {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('login-title').innerText = role.charAt(0).toUpperCase() + role.slice(1) + " Login";
+            
+            // Show section input only for teachers
+            if(role === 'teacher') {
+                document.getElementById('section-input').classList.remove('hidden');
+            } else {
+                document.getElementById('section-input').classList.add('hidden');
+            }
+        }
+
+        function goHome() {
+            document.getElementById('landing-page').classList.remove('hidden');
+            document.getElementById('login-container').classList.add('hidden');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const uid = document.getElementById('uid').value;
+            const pass = document.getElementById('pass').value;
+            const section = document.getElementById('section').value;
+
+            if (currentRole === 'student') {
+                const user = db.students.find(s => s.id === uid && s.pass === pass);
+                if (user) { currentUser = user; loginSuccess(); }
+                else alert("Invalid Credentials");
+            } 
+            else if (currentRole === 'teacher') {
+                const user = db.teachers.find(t => t.id === uid && t.pass === pass && t.section === section);
+                if (user) { currentUser = user; loginSuccess(); }
+                else alert("Invalid Credentials");
+            }
+            else if (currentRole === 'office') {
+                const user = db.office.find(o => o.id === uid && o.pass === pass);
+                if (user) { currentUser = user; loginSuccess(); }
+                else alert("Invalid Credentials");
+            }
+            else if (currentRole === 'parent') {
+                // Simplified parent login (just checks if student exists)
+                const user = db.students.find(s => s.id === uid);
+                if(user) { currentUser = user; loginSuccess(); }
+                else alert("Invalid Credentials");
+            }
+        }
+
+        function loginSuccess() {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('user-role-display').innerText = `${currentUser.name} (${currentRole})`;
+            setupSidebar();
+            renderContent();
+        }
+
+        function logout() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('main-content').classList.remove('expanded');
+            goHome();
+            currentUser = null;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('main-content').classList.toggle('expanded');
+        }
+
+        // --- DYNAMIC SIDEBAR & CONTENT ---
+        function setupSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.innerHTML = ''; // Clear previous
+
+            let links = [];
+            
+            if (currentRole === 'student') {
+                links = [
+                    { text: 'My Attendance', action: 'renderStudentAttendance' },
+                    { text: 'My Marks (IA/Final)', action: 'renderStudentMarks' },
+                    { text: 'Fee Status', action: 'renderStudentFees' },
+                    { text: 'Circulars & Docs', action: 'renderCirculars' },
+                    { text: 'Theme Settings', action: 'renderTheme' }
+                ];
+            } else if (currentRole === 'teacher') {
+                links = [
+                    { text: 'Update Attendance', action: 'renderTeacherAttendance' },
+                    { text: 'Update IA Marks', action: 'renderTeacherMarks' },
+                    { text: 'Upload Documents', action: 'renderUploadDocs' }
+                ];
+            } else if (currentRole === 'office') {
+                links = [
+                    { text: 'Add Student', action: 'renderAddStudent' },
+                    { text: 'Manage Fees', action: 'renderManageFees' },
+                    { text: 'Upload Circulars', action: 'renderUploadCirculars' }
+                ];
+            } else if (currentRole === 'parent') {
+                links = [
+                    { text: 'View Attendance', action: 'renderParentAttendance' },
+                    { text: 'View Remarks', action: 'renderParentRemarks' }
+                ];
+            }
+
+            links.forEach(link => {
+                const a = document.createElement('a');
+                a.href = "#";
+                a.innerText = link.text;
+                a.onclick = () => {
+                    window[link.action]();
+                    toggleSidebar(); // Close sidebar on click
+                };
+                sidebar.appendChild(a);
+            });
+        }
+
+        function renderContent() {
+            // Default view based on role
+            if(currentRole === 'student') renderStudentAttendance();
+            if(currentRole === 'teacher') renderTeacherAttendance();
+            if(currentRole === 'office') renderAddStudent();
+            if(currentRole === 'parent') renderParentAttendance();
+        }
+
+        // --- STUDENT VIEWS ---
+        function renderStudentAttendance() {
+            const html = `
+                <div class="card">
+                    <h3>Attendance Record</h3>
+                    <table>
+                        <tr><th>Subject</th><th>Present</th><th>Total</th><th>%</th></tr>
+                        <tr><td>Math</td><td>20</td><td>25</td><td>80%</td></tr>
+                        <tr><td>Science</td><td>22</td><td>25</td><td>88%</td></tr>
+                        <tr><td>English</td><td>24</td><td>25</td><td>96%</td></tr>
+                    </table>
+                </div>
+                <div class="card">
+                    <h3>Advisors</h3>
+                    <p><strong>Class Advisor:</strong> ${currentUser.advisor}</p>
+                    <p><strong>Proctor:</strong> ${currentUser.proctor}</p>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderStudentMarks() {
+            const marks = db.marks[currentUser.id] || { ia1: 0, ia2: 0, final: 0 };
+            const html = `
+                <div class="card">
+                    <h3>Semester Marks</h3>
+                    <table>
+                        <tr><th>Assessment</th><th>Marks</th></tr>
+                        <tr><td>IA 1</td><td>${marks.ia1}</td></tr>
+                        <tr><td>IA 2</td><td>${marks.ia2}</td></tr>
+                        <tr><td>Finalized</td><td>${marks.final}</td></tr>
+                    </table>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderStudentFees() {
+            const html = `
+                <div class="card">
+                    <h3>Fee Status</h3>
+                    <p style="font-size: 1.5rem; color: ${currentUser.fees === 'Paid' ? 'green' : 'red'}">
+                        ${currentUser.fees}
+                    </p>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderCirculars() {
+            let list = db.circulars.map(c => `<li><a href="#">${c.title} (${c.type})</a></li>`).join('');
+            const html = `
+                <div class="card">
+                    <h3>Circulars & Documents</h3>
+                    <ul>${list}</ul>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderTheme() {
+            const html = `
+                <div class="card">
+                    <h3>Theme Settings</h3>
+                    <button onclick="document"
