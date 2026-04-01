@@ -8,4 +8,4 @@ public class ex3{
         System.out.println("Division: " + (a / b));
         System.out.println("Modulus: " + (a % b));
     }
-}
+}  
